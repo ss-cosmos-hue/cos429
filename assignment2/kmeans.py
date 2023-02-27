@@ -20,21 +20,24 @@ def calculate_labels(x, centroids):
     # def calc_diff(vec1,vec2):
     #     return np.linalg.norm(vec1,vec2)
     # table = calc_diff(x,centroids)
-    labels = np.array(N)
-    table = np.zeros((N,K))    
+    labels = np.zeros(N)
+    # table = np.zeros((N,K))    
     
     # def diff(centvec):
     #     return np.linalg.norm((x-centvec),axis = 1)
     
     # table = np.transpose(np.apply_along_axis(diff,axis = 1,arr=centroids))
     
-    for i in range(K):
-        print("process",i)
-        table[:,i] = np.linalg.norm((x-centroids[i]),axis=1)#this process seems to take time
-        
+    # for i in range(K):
+    #     print("process",i)
+    #     table[:,i] = np.linalg.norm((x-centroids[i]),axis=1)#this process seems to take time
+    
+    #less vectorization
+    for i in range(N):
+        labels[i] = np.argmin(np.linalg.norm((x[i]-centroids),axis = 1))
     # table = np.linalg.norm(([x]*K-centroids),axis=1)
     
-    labels = np.argmin(table,axis=1)     
+    # labels = np.argmin(table,axis=1)     
     ### YOUR CODE ENDS HERE ###
     
     return labels
@@ -78,7 +81,8 @@ def kmeans(x, K, niter, seed=123):
     
     Note: Be careful with the size of numpy array!
     """
-    print("aa")
+    print("aaaa")
+    
     np.random.seed(seed)
     N,D = np.shape(x)
     unique_colors = np.unique(x.reshape(-1, D), axis=0)
