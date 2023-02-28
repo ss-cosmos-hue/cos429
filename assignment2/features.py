@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from assn2 import load_flatten
+# from assn2 import load_flatten
 
 
 ############## SIFT ############################################################
@@ -133,8 +133,12 @@ def get_differential_filter():
     filter_y = np.zeros((3, 3))
     
     ### START YOUR CODE HERE ###
-    filter_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-    filter_y = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
+    # filter_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
+    filter_x = np.array([[1,0,-1],[2,0,-2],[1,0,-1]])
+    
+    # filter_y = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
+    filter_y = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
+    
     
     ### END YOUR CODE HERE ###
     
