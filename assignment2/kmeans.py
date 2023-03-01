@@ -81,27 +81,27 @@ def kmeans(x, K, niter, seed=123):
     
     Note: Be careful with the size of numpy array!
     """
-    print("aaaa")
+    #print("aaaa")
     
     np.random.seed(seed)
     N,D = np.shape(x)
     unique_colors = np.unique(x.reshape(-1, D), axis=0)
-    print("a")#takes time like 1minute
+    #print("a")#takes time like 1minute
     
     idx = np.random.choice(len(unique_colors), K, replace=False)
 
     # Randomly choose centroids
     centroids = unique_colors[idx, :]
-    print("b")
+    #print("b")
     
 
     # Initialize labels
     labels = np.zeros((x.shape[0], ), dtype=np.uint8)
-    print("c")
+    #print("c")
 
     ### YOUR CODE STARTS HERE ###
     for _ in range(niter):
-        print(_)
+        #print(_)
         labels = calculate_labels(x, centroids)        
         centroids = calculate_centroid(x, labels, K)
     
