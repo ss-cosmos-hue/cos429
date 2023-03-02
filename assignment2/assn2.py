@@ -127,7 +127,10 @@ def load_vector_image_with_bias(X_train, X_val, X_test):
     N_train, N_val, N_text = X_train.shape[0], X_val.shape[0], X_test.shape[0]
     
     ### START YOUR CODE HERE ###
+    X_train_mean = X_train.mean(axis = 0)
+    
     def localreshape(X):
+        X = X-X_train_mean
         N,H,W,_ = np.shape(X)
         ans = np.zeros((N, H * W * 3 + 1))
         ans[:,-1] = 1
