@@ -133,9 +133,11 @@ def load_vector_image_with_bias(X_train, X_val, X_test):
         ans[:,-1] = 1
         ans[:,:-1] = np.reshape(X,(N,H*W*3))
         return ans
+    # mean subtracted
     X_train = localreshape(X_train)
     X_val = localreshape(X_val)
     X_test = localreshape(X_test)
+    # append bias
     ### END YOUR CODE HERE ###
     
     return X_train, X_val, X_test

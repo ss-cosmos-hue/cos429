@@ -95,7 +95,9 @@ def spatial_pyramid_matching_with_bias(L, feature, centroids):
     for i in range(L+1):
         # print("level",i)
         accum_blocknum_till_prev = int((4**i-1)/3)
-        weight = 1/(2**(L-i))
+        weight = 1/(2**(L-i+1))
+        if i == 0:
+            weight = 1/2**L
         localheight = H//(2**i)
         localwidth = W//(2**i)
         for j in range(2**i):
