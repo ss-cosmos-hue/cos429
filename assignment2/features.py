@@ -89,7 +89,7 @@ def spatial_pyramid_matching_with_bias(L, feature, centroids):
     
     H, W,D = feature.shape[0], feature.shape[1],feature.shape[2]
     K = centroids.shape[0]
-    hist = np.zeros(16*int((4**(L+1) - 1)/3)+1, )#What does 16 mean here?
+    hist = np.zeros(K*int((4**(L+1) - 1)/3)+1, )
     
     ### START YOUR CODE HERE ###
     for i in range(L+1):
@@ -112,7 +112,10 @@ def spatial_pyramid_matching_with_bias(L, feature, centroids):
                 # print(localfeature_flatten.shape)
                 for l in range(localheight*localwidth):
                     centidx = np.argmin(np.linalg.norm(centroids - localfeature_flatten[l],axis = 1))
-                    hist[16*(accum_blocknum_till_prev + blocknum_atcurlevel)+centidx] += 1 * weight
+                    hist[K*(accum_blocknum_till_prev + blocknum_atcurlevel)+centidx] += 1 * weight
+    mean = np.mean(hist[:-1])
+    std = np.std(hist[:-1])
+    hist = (hist-mean)/std
     hist[-1] = 1
     ### END YOUR CODE HERE ###
     
