@@ -34,8 +34,10 @@ def affine_transform_loss(P, P_prime, S, t):
     # fully vectorized, and should not contain any loops (including map,      #
     # filter, or comprehension expressions).                                  #
     ###########################################################################
-
-
+    N = P.shape[0]
+    for i in range(N):
+        loss += (P[i] @ S + t - P_prime[i]) ** 2
+    loss /= N
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
