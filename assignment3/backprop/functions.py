@@ -31,7 +31,11 @@ def f1(x1, w1, x2, w2, b, y):
     # TODO: Implement the forward pass for the computational graph f1 shown   #
     # in the homework description. Store the loss in the variable L.          #
     ###########################################################################
-
+    a1 = x1 * w1
+    a2 = x2 * w2
+    y_hat = a1 + a2 + b
+    d = y_hat - y
+    L = d ** 2
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
@@ -44,8 +48,16 @@ def f1(x1, w1, x2, w2, b, y):
     # in the homework description. Store the gradients for each input         #
     # variable in the corresponding grad variagbles defined above.            #
     ###########################################################################
-
-
+    grad_d = 2 * d
+    grad_y_hat = grad_d
+    grad_y = -grad_d
+    grad_a1 = grad_y_hat
+    grad_a2 = grad_y_hat
+    grad_b = grad_y_hat
+    grad_x1 = grad_a1 * w1
+    grad_w1 = grad_a1 * x1
+    grad_x2 = grad_a2 * w2
+    grad_w2 = grad_a2 * x2
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
@@ -78,8 +90,11 @@ def f2(x):
     # TODO: Implement the forward pass for the computational graph f2 shown   #
     # in the homework description. Store the output in the variable y.        #
     ###########################################################################
-
-
+    d = 2 * x
+    d_exp = math.exp(d)
+    t = d_exp - 1
+    b = d_exp + 1
+    y = t / b
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
@@ -91,8 +106,11 @@ def f2(x):
     # in the homework description. Store the gradients for each input         #
     # variable in the corresponding grad variagbles defined above.            #
     ###########################################################################
-
-
+    grad_t = 1 / b
+    grad_b = - t / b ** 2
+    grad_d_exp = grad_t + grad_b
+    grad_d = math.exp(d) * grad_d_exp
+    grad_x = 2 * grad_d
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
@@ -127,8 +145,13 @@ def f3(s1, s2, y):
     # TODO: Implement the forward pass for the computational graph f3 shown   #
     # in the homework description. Store the loss in the variable L.          #
     ###########################################################################
-    
-
+    e1 = math.exp(s1)
+    e2 = math.exp(s2)
+    d = e1 + e2
+    p1 = e1 / d
+    p2 = e2 / d
+    p = p1 if y == 1 else p2
+    L = -math.log(p)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
@@ -143,7 +166,14 @@ def f3(s1, s2, y):
     #                                                                         #
     # HINT: You may need an if statement to backprop through the choose node  #
     ###########################################################################
-
+    grad_p = - 1 / p
+    grad_p1 = grad_p if y == 1 else 0
+    grad_p2 = grad_p if y == 2 else 0
+    grad_d = - e1 / d ** 2 * grad_p1 - e2 / d ** 2 * grad_p2
+    grad_e1 = grad_d + 1 / d * grad_p1
+    grad_e2 = grad_d + 1 / d * grad_p2
+    grad_s1 = math.exp(s1) * grad_e1
+    grad_s2 = math.exp(s2) * grad_e2
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
