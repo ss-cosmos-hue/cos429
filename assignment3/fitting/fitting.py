@@ -34,9 +34,12 @@ def affine_transform_loss(P, P_prime, S, t):
     # fully vectorized, and should not contain any loops (including map,      #
     # filter, or comprehension expressions).                                  #
     ###########################################################################
+    loss = 0
+    prediction = []
     N = P.shape[0]
     for i in range(N):
-        loss += (P[i] @ S + t - P_prime[i]) ** 2
+        prediction.append(S @ P[i] + t)
+        loss += (prediction[i] - P_prime[i]) ** 2
     loss /= N
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -50,7 +53,7 @@ def affine_transform_loss(P, P_prime, S, t):
     # in the grad variables defined above. As above, your implementation      #
     # should be fully vectorized and should not contain any loops.            #
     ###########################################################################
-
+    # Lecture 11 slides with vectorized bp grad_S = 
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
