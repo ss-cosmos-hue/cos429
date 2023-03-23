@@ -34,13 +34,11 @@ def affine_transform_loss(P, P_prime, S, t):
     # fully vectorized, and should not contain any loops (including map,      #
     # filter, or comprehension expressions).                                  #
     ###########################################################################
-    loss = 0
-    prediction = []
-    N = P.shape[0]
-    for i in range(N):
-        prediction.append(S @ P[i] + t)
-        loss += (prediction[i] - P_prime[i]) ** 2
-    loss /= N
+    N,_ = np.shape(P)
+    
+    prediction = P@S.T + t#shape of S@P.T: (2,N), shape of t:2 #t will be broadcasted
+    err = prediction-P_prime
+    loss = np.sum(err**2)/N
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -53,8 +51,8 @@ def affine_transform_loss(P, P_prime, S, t):
     # in the grad variables defined above. As above, your implementation      #
     # should be fully vectorized and should not contain any loops.            #
     ###########################################################################
-    # Lecture 11 slides with vectorized bp grad_S = 
-
+    grad_S = 2/N*err.T@P#or do not need to transpose
+    grad_t = 2/N*np.ones((N,1)).T@err
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -92,7 +90,16 @@ def fit_affine_transform(P, P_prime, logger, learning_rate, steps):
     # storing the parameters of the transform in the variables above.         #
     # Don't forget to call the logger at each iteration!                      #
     ###########################################################################
-    
+    #initialization
+    S = np.eye(2)
+    t = np.zeros(2)
+    #iteration
+    for i in range(steps):
+          loss,prediction, grad_S,grad_t = affine_transform_loss(P, P_prime, S, t)
+          logger.log(i,loss,prediction)
+          S = S-learning_rate*grad_S 
+          t = t-learning_rate*grad_t
+          
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
