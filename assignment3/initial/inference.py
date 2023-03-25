@@ -16,6 +16,10 @@ def inference(model, input):
     activations = [None,] * num_layers
 
     # TODO: FORWARD PROPAGATION CODE
+    for l in range(num_layers):
+        layer = model['layers'][l]
+        activations[l], _, _ = layer['fwd_fn'](input, layer['params'], layer['hyper_params'], False)
+        input = activations[l]
 
     output = activations[-1]
     return output, activations

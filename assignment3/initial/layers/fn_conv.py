@@ -25,7 +25,7 @@ def fn_conv(input, params, hyper_params, backprop, dv_output=None):
     out_height = in_height - filter_height + 1
     out_width = in_width - filter_width + 1
 
-    assert params['W'].shape[2] == input.shape[2], 'Filter depth does not match number of input channels'
+    assert filter_depth == num_channels, 'Filter depth does not match number of input channels'
 
     # Initialize
     output = np.zeros((out_height, out_width, num_filters, batch_size))
