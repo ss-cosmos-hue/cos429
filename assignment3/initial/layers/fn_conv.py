@@ -21,9 +21,9 @@ def fn_conv(input, params, hyper_params, backprop, dv_output=None):
     """
 
     in_height, in_width, num_channels, batch_size = input.shape
-    _, _, filter_depth, num_filters = params['W'].shape
-    out_height = in_height - params['W'].shape[0] + 1
-    out_width = in_width - params['W'].shape[1] + 1
+    filter_height, filter_width, filter_depth, num_filters = params['W'].shape
+    out_height = in_height - filter_height + 1
+    out_width = in_width - filter_width + 1
 
     assert params['W'].shape[2] == input.shape[2], 'Filter depth does not match number of input channels'
 
@@ -35,12 +35,15 @@ def fn_conv(input, params, hyper_params, backprop, dv_output=None):
     
     # TODO: FORWARD CODE
     #       Update output with values
-    for b in range(batch_size):
-        for f in range(num_filters):
-            batch_input = input[:,:,:,b]
-            filter_weights = params['W'][:,:,:,f]
-            output[:,:,f,b] = scipy.signal.convolve(batch_input, np.flip(filter_weights), mode='valid')[:,:,0] + params['b'][f]
+    
 
+    for i in range(batch_size):
+        data = input[:,:,:,i]
+        for j in range(num_filters):
+            filter = params['W'][:,:,:,j]
+            bias = params['b'][j]
+            # print(np.shape(output[:,:,j,i]))
+            output[:,:,j,i]= scipy.signal.convolve(data,np.flip(filter),mode='valid',method = 'direct')[:,:,0]+np.ones((out_height,out_width))*bias
 
     if backprop:
         assert dv_output is not None
@@ -50,21 +53,21 @@ def fn_conv(input, params, hyper_params, backprop, dv_output=None):
         
         # TODO: BACKPROP CODE
         #       Update dv_input and grad with values
-        bias_grads = np.zeros((num_filters, batch_size))
-        for b in range(batch_size):
-            bias_grads[:, b] = np.sum(dv_output[:,:,:,b], axis=(0,1))
-        grad['b'] = np.mean(bias_grads, axis=1, keepdims=True)
+        
+        for j in range(num_filters):
+            grad['b'][j] = np.sum(dv_output[:,:,j])/batch_size
+                
+        for i in range(batch_size):
+            for j in range(num_filters):
+                for k in range(filter_depth):
+                    output_padded = np.zeros((in_height+filter_height-1,in_width + filter_width - 1))
+                    output_padded[filter_height-1:-(filter_height-1),filter_width-1:-(filter_width-1)] = dv_output[:,:,j,i]
+                    dv_input[:,:,k,i] +=  scipy.signal.convolve(output_padded,params['W'][:,:,k,j],mode = 'valid',method='direct')
+    
+        for i in range(batch_size):
+            for j in range(num_filters):
+                grad['W'][:,:,:,j] += scipy.signal.convolve(np.expand_dims(np.flip(dv_output[:,:,j,i]),axis = 2),input[:,:,:,i],mode = 'valid',method='direct')#flip!!
+        grad['W']/=batch_size
 
-        '''
-        weight_grads = np.zeros(params['W'].shape + (batch_size,))
-        for b in range(batch_size):
-            for f in range(num_filters):
-                batch_input = input[:,:,:,b]
-                filter_dv_output = dv_output[:,:,:,b]
-                print(batch_input.shape)
-                print(filter_dv_output.shape)
-                weight_grads[:,:,:,:,b] = scipy.signal.convolve(batch_input, np.flip(filter_dv_output), mode='valid')[:,:,0]
-        grad['W'] = np.mean(weight_grads, axis=4, keepdims=True)
-        '''
 
     return output, dv_input, grad
