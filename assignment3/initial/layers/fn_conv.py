@@ -35,8 +35,11 @@ def fn_conv(input, params, hyper_params, backprop, dv_output=None):
     
     # TODO: FORWARD CODE
     #       Update output with values
-
-
+    for b in range(batch_size):
+        for f in range(num_filters):
+            batch_input = input[:,:,:,b]
+            filter_weights = params['W'][:,:,:,f]
+            output[:,:,f,b] = scipy.signal.convolve(batch_input, np.flip(filter_weights), mode='valid')[:,:,0] + params['b'][f]
 
 
     if backprop:
@@ -47,7 +50,21 @@ def fn_conv(input, params, hyper_params, backprop, dv_output=None):
         
         # TODO: BACKPROP CODE
         #       Update dv_input and grad with values
+        bias_grads = np.zeros((num_filters, batch_size))
+        for b in range(batch_size):
+            bias_grads[:, b] = np.sum(dv_output[:,:,:,b], axis=(0,1))
+        grad['b'] = np.mean(bias_grads, axis=1, keepdims=True)
 
-
+        '''
+        weight_grads = np.zeros(params['W'].shape + (batch_size,))
+        for b in range(batch_size):
+            for f in range(num_filters):
+                batch_input = input[:,:,:,b]
+                filter_dv_output = dv_output[:,:,:,b]
+                print(batch_input.shape)
+                print(filter_dv_output.shape)
+                weight_grads[:,:,:,:,b] = scipy.signal.convolve(batch_input, np.flip(filter_dv_output), mode='valid')[:,:,0]
+        grad['W'] = np.mean(weight_grads, axis=4, keepdims=True)
+        '''
 
     return output, dv_input, grad
