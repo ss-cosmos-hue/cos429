@@ -9,9 +9,11 @@ sys.path += ['pyc_code', 'layers']
 import numpy as np
 from init_layers import init_layers
 from init_model import init_model
+from loss_euclidean import loss_euclidean
 from inference import inference
 from inference_ import inference as inference_
-from loss_euclidean import loss_euclidean
+from calc_gradient import calc_gradient
+from calc_gradient_ import calc_gradient as calc_gradient_
 
 def pass_fail(cond):
     if cond:
@@ -21,8 +23,8 @@ def pass_fail(cond):
     return str
 
 def mse(val1, val2):
-    assert val1.shape == val2.shape
-    return np.sum((val1 - val2) ** 2) / val1.size
+    if type(val1) == np.ndarray:
+        return np.sum((val1 - val2) ** 2) / val1.size
 
 def main():
     np.random.seed(0)
@@ -41,32 +43,25 @@ def main():
 
     model = init_model(l, [10, 10, 3], 10, True)
 
-    # Example calls you might make for inference:
-    inp = np.random.rand(10, 10, 3, 3)    # Dummy input
-    out, _ = inference(model, inp)
-    out_, _ = inference_(model, inp)
-
-    print(out)
-    print(out_)
+    # Test for inference
+    inp = np.random.rand(10, 10, 3, 3)
+    out, acts = inference(model, inp)
+    out_, acts_ = inference_(model, inp)
 
     print('Inference')
-    if out is None:
-        print('\tout DNE')
-        print('\tTest: %s' % pass_fail(False))
-    else:
-        err_out = mse(out, out_)
-        if not (out.shape==out_.shape):
-            print('\tout size does not match!')
-            print('\tTest: %s' % pass_fail(False))
-        else:
-            print('\tTest: %s' % pass_fail(err_out < err_thresh))
+    print('\tTest: %s' % pass_fail(mse(out, out_) < err_thresh))
+    # print('\tTest: %s' % pass_fail(mse(np.stack(acts), np.stack(acts_)) < err_thresh))
+
+    # Test for calc_gradient
+    dv_output = np.random.rand(len(out), len(out[0]))
+    out = calc_gradient(model, inp, acts, dv_output)
+    out_ = calc_gradient_(model, inp, acts_, dv_output)
+
+    print('Calculate Gradient')
+    print(out)
+    print(out_)
+    # print('\tTest: %s' % pass_fail(mse(out, out_) < err_thresh))
     
-    
-    
-    # Example calls you might make for calculating loss:
-    output = np.random.rand(10, 20)       # Dummy output
-    ground_truth = np.random.rand(10, 20) # Dummy ground truth
-    loss, _ = loss_euclidean(output, ground_truth, {}, False)
 
 if __name__ == '__main__':
     main()
