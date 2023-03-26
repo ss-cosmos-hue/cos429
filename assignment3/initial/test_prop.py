@@ -58,9 +58,7 @@ def main():
     out_ = calc_gradient_(model, inp, acts_, dv_output)
 
     print('Calculate Gradient')
-    print(out)
-    print(out_)
-    # print('\tTest: %s' % pass_fail(mse(out, out_) < err_thresh))
+    print('\tTest: %s' % pass_fail(mse(out[0]['W'], out_[0]['W']) < err_thresh))
     
 
 if __name__ == '__main__':

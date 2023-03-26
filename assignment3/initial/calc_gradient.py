@@ -20,12 +20,11 @@ def calc_gradient(model, input, layer_acts, dv_output):
     # TODO: Determine the gradient at each layer.
     #       Remember that back-propagation traverses 
     #       the model in the reverse order.
-
-    # WIP
-    for l in range(num_layers)[::-1]:
+    for l in np.arange(1, num_layers)[::-1]:
         layer = model['layers'][l]
-        print(layer['fwd_fn'](input, layer['params'], layer['hyper_params'], False))
-        _, dv_input, grads[l] = layer['fwd_fn'](input, layer['params'], layer['hyper_params'], True, dv_output=dv_output)
-        dv_output = dv_input
+        _, dv_input, grads[l] = layer['fwd_fn'](layer_acts[l-1], layer['params'], layer['hyper_params'], True, dv_output=dv_output)
+        dv_output = dv_input  
+    layer = model['layers'][0]
+    _, dv_input, grads[0] = layer['fwd_fn'](input, layer['params'], layer['hyper_params'], True, dv_output=dv_output)
 
     return grads
