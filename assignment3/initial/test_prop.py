@@ -14,6 +14,8 @@ from inference import inference
 from inference_ import inference as inference_
 from calc_gradient import calc_gradient
 from calc_gradient_ import calc_gradient as calc_gradient_
+from update_weights import update_weights
+from update_weights_ import update_weights as update_weights_
 
 def pass_fail(cond):
     if cond:
@@ -50,16 +52,22 @@ def main():
 
     print('Inference')
     print('\tTest: %s' % pass_fail(mse(out, out_) < err_thresh))
-    # print('\tTest: %s' % pass_fail(mse(np.stack(acts), np.stack(acts_)) < err_thresh))
 
     # Test for calc_gradient
     dv_output = np.random.rand(len(out), len(out[0]))
-    out = calc_gradient(model, inp, acts, dv_output)
-    out_ = calc_gradient_(model, inp, acts_, dv_output)
+    grads = calc_gradient(model, inp, acts, dv_output)
+    grads_ = calc_gradient_(model, inp, acts_, dv_output)
 
     print('Calculate Gradient')
-    print('\tTest: %s' % pass_fail(mse(out[0]['W'], out_[0]['W']) < err_thresh))
+    print('\tTest: %s' % pass_fail(mse(grads[0]['W'], grads_[0]['W']) < err_thresh))
     
+    # Test for update_weights
+    hyper_params = {'learning_rate' : 1e-3, 'weight_decay' : 1e-3}
+    new_model = update_weights(model, grads, hyper_params)
+    new_model_ = update_weights(model, grads_, hyper_params)
+    
+    print('Update Weights')
+    print('\tTest: %s' % pass_fail(mse(new_model['layers'][0]['params']['W'], new_model_['layers'][0]['params']['W']) < err_thresh))
 
 if __name__ == '__main__':
     main()

@@ -18,5 +18,10 @@ def update_weights(model, grads, hyper_params):
     updated_model = model
 
     # TODO: Update the weights of each layer in your model based on the calculated gradients
+    for l in range(num_layers):
+        if updated_model['layers'][l]['params']['W'] is not None:
+            updated_model['layers'][l]['params']['W'] -= a * (grads[l]['W'] - lmd * updated_model['layers'][l]['params']['W'])
+        if updated_model['layers'][l]['params']['b'] is not None:
+            updated_model['layers'][l]['params']['b'] = a * (grads[l]['b'] - lmd * updated_model['layers'][l]['params']['b'])
 
     return updated_model
