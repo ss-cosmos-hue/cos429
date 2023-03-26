@@ -6,7 +6,7 @@ from loss_crossentropy import loss_crossentropy
 ######################################################
 # Set use_pcode to True to use the provided pyc code
 # for inference, calc_gradient, loss_crossentropy and update_weights
-use_pcode = True
+use_pcode = False
 
 # You can modify the imports of this section to indicate
 # whether to use the provided pyc or your own code for each of the four functions.
@@ -59,7 +59,8 @@ def train(model, input, label, params, numIters):
 
     num_inputs = input.shape[-1]
     loss = np.zeros((numIters,))
-
+    
+    
     for i in range(numIters):
         # TODO: One training iteration
         # Steps:
@@ -75,15 +76,19 @@ def train(model, input, label, params, numIters):
         #step1
         #How do we select a subset of the input? Can we just randomly select it?
         indices_of_batch =  np.random.choice(range(num_inputs),size = batch_size,replace=False)#randomly choose batch_size num of indices from [0,...,input-1]
-        batch = input[:,indices_of_batch]
+        batch = input[...,indices_of_batch]
         mean = np.mean(batch,axis = 0)
         
         #todo normalization
         batch_label = label[indices_of_batch]#do we need to normalize label?
         #batch normalization
-        
+        batch_mean = np.mean(batch,axis = -1)[...,np.newaxis]
+        batch_std = np.std(batch,axis= -1)[...,np.newaxis]
+        eps = 1e-9#epsilon to avoid zero division
+        batch = (batch -batch_mean)/(batch_std+eps)
         #step2
         output,layer_acts = inference(model,batch)
+        
         #output is expected to be a matrix, each column corresponding to an instance, whose probability of belonging to each class contained in each row
         
         #step3
@@ -92,13 +97,13 @@ def train(model, input, label, params, numIters):
         #not sure whether backprop should be T or F
         pred = np.argmax(output,axis = 0)
         accuracy = np.count_nonzero(pred==batch_label)/batch_size
-        if i%50 == 0: 
+        if i%2 == 0: 
             print("iter ",i, "accuracy ",accuracy,"loss ",loss)
         #step4
-        grads = calc_gradient(model, input, layer_acts, dv_output)
+        grads = calc_gradient(model, batch, layer_acts, dv_output)
         #step5
         model = update_weights(model,grads,update_params)
         
     #option2  
-    np.savez(save_file, **model)
+    # np.savez(save_file, **model)
     return model, loss
