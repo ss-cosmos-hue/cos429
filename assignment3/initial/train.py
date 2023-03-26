@@ -76,8 +76,12 @@ def train(model, input, label, params, numIters):
         #How do we select a subset of the input? Can we just randomly select it?
         indices_of_batch =  np.random.choice(range(num_inputs),size = batch_size,replace=False)#randomly choose batch_size num of indices from [0,...,input-1]
         batch = input[:,indices_of_batch]
+        mean = np.mean(batch,axis = 0)
+        
         #todo normalization
-        batch_label = label[indices_of_batch]
+        batch_label = label[indices_of_batch]#do we need to normalize label?
+        #batch normalization
+        
         #step2
         output,layer_acts = inference(model,batch)
         #output is expected to be a matrix, each column corresponding to an instance, whose probability of belonging to each class contained in each row
