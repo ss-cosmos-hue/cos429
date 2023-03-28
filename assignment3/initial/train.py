@@ -2,6 +2,7 @@ import sys
 sys.path += ['layers']
 import numpy as np
 from loss_crossentropy import loss_crossentropy
+from update_avegrads import update_avegrads
 
 ######################################################
 # Set use_pcode to True to use the provided pyc code
@@ -37,7 +38,6 @@ def train(model, input, label, params, numIters):
             params["weight_decay"]
             params["batch_size"]
             params["save_file"]
-            params["print_step"]
             Free to add more parameters to this dictionary for your convenience of training.
         numIters: Number of training iterations
     '''
@@ -62,6 +62,8 @@ def train(model, input, label, params, numIters):
     loss = np.zeros((numIters,))
     accuracy = np.zeros((numIters,))
     
+    avegrads = None
+    
     
     for i in range(numIters):
         # TODO: One training iteration
@@ -79,15 +81,14 @@ def train(model, input, label, params, numIters):
         #How do we select a subset of the input? Can we just randomly select it?
         indices_of_batch =  np.random.choice(range(num_inputs),size = batch_size,replace=False)#randomly choose batch_size num of indices from [0,...,input-1]
         batch = input[...,indices_of_batch]
-        mean = np.mean(batch,axis = 0)
         
         #todo normalization
         batch_label = label[indices_of_batch]#do we need to normalize label?
         #batch normalization
-        batch_mean = np.mean(batch,axis = -1)[...,np.newaxis]
-        batch_std = np.std(batch,axis= -1)[...,np.newaxis]
-        eps = 1e-9#epsilon to avoid zero division
-        batch = (batch -batch_mean)/(batch_std+eps)
+        # batch_mean = np.mean(batch,axis = -1)[...,np.newaxis]
+        # batch_std = np.std(batch,axis= -1)[...,np.newaxis]
+        # eps = 1e-9#epsilon to avoid zero division
+        # batch = (batch -batch_mean)/(batch_std+eps)
         #step2
         output,layer_acts = inference(model,batch)
         
@@ -99,13 +100,21 @@ def train(model, input, label, params, numIters):
         #not sure whether backprop should be T or F
         pred = np.argmax(output,axis = 0)
         accuracy[i] = np.count_nonzero(pred==batch_label)/batch_size
-        if i%params["print_step"] == 0: 
-            print("Iteration: ",i, "\tAccuracy: ",accuracy[i],"\tLoss: ",loss[i])
+        if i%2 == 0: 
+            print("iter ",i, "accuracy ",accuracy[i],"loss ",loss[i])
         #step4
         grads = calc_gradient(model, batch, layer_acts, dv_output)
         #step5
-        model = update_weights(model,grads,update_params)
+        
+
+        
+        if i == 0:
+            avegrads = grads
+        else:
+            avegrads = update_avegrads(model,grads,avegrads,rho=0.99)
+        
+        model = update_weights(model,avegrads,update_params)
         
     #option2  
     # np.savez(save_file, **model)
-    return model, accuracy, loss
+    return model, loss,accuracy
