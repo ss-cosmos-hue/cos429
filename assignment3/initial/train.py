@@ -37,6 +37,7 @@ def train(model, input, label, params, numIters):
             params["weight_decay"]
             params["batch_size"]
             params["save_file"]
+            params["print_step"]
             Free to add more parameters to this dictionary for your convenience of training.
         numIters: Number of training iterations
     '''
@@ -97,8 +98,8 @@ def train(model, input, label, params, numIters):
         #not sure whether backprop should be T or F
         pred = np.argmax(output,axis = 0)
         accuracy = np.count_nonzero(pred==batch_label)/batch_size
-        if i%2 == 0: 
-            print("iter ",i, "accuracy ",accuracy,"loss ",loss)
+        if i%params["print_step"] == 0: 
+            print("Iteration: ",i, "\tAccuracy: ",accuracy,"\tLoss: ",loss)
         #step4
         grads = calc_gradient(model, batch, layer_acts, dv_output)
         #step5
