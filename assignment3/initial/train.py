@@ -60,6 +60,7 @@ def train(model, input, label, params, numIters):
 
     num_inputs = input.shape[-1]
     loss = np.zeros((numIters,))
+    accuracy = np.zeros((numIters,))
     
     
     for i in range(numIters):
@@ -94,12 +95,12 @@ def train(model, input, label, params, numIters):
         
         #step3
         
-        loss, dv_output = loss_crossentropy(output, batch_label, update_params, backprop = True)
+        loss[i], dv_output = loss_crossentropy(output, batch_label, update_params, backprop = True)
         #not sure whether backprop should be T or F
         pred = np.argmax(output,axis = 0)
-        accuracy = np.count_nonzero(pred==batch_label)/batch_size
+        accuracy[i] = np.count_nonzero(pred==batch_label)/batch_size
         if i%params["print_step"] == 0: 
-            print("Iteration: ",i, "\tAccuracy: ",accuracy,"\tLoss: ",loss)
+            print("Iteration: ",i, "\tAccuracy: ",accuracy[i],"\tLoss: ",loss[i])
         #step4
         grads = calc_gradient(model, batch, layer_acts, dv_output)
         #step5
@@ -107,4 +108,4 @@ def train(model, input, label, params, numIters):
         
     #option2  
     # np.savez(save_file, **model)
-    return model, loss
+    return model, accuracy, loss
