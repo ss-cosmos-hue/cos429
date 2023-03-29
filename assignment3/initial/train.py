@@ -25,7 +25,7 @@ else:
     from update_weights import update_weights
 ######################################################
 
-def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000, rho = 0.99):
+def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000):
     '''
     This training function is written specifically for classification,
     since it uses crossentropy loss and tests accuracy assuming the final output
@@ -50,6 +50,8 @@ def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000, rho 
     wd = params.get("weight_decay", .0005)
     # Batch size
     batch_size = params.get("batch_size", 128)
+    # Friction
+    rho = params.get("rho", 0.99)
     # There is a good chance you will want to save your network model during/after
     # training. It is up to you where you save and how often you choose to back up
     # your model. By default the code saves the model in 'model.npz'.
@@ -114,4 +116,4 @@ def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000, rho 
     # Optional 2
     np.savez(save_file, **model)
 
-    return model, train_accuracy, train_loss
+    return model, train_accuracy, train_loss, test_accuracy, test_loss
