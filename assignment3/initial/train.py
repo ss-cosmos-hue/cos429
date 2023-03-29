@@ -92,6 +92,10 @@ def train(model, input, label, params, numIters):
         loss[i], dv_output = loss_crossentropy(output, batch_label, update_params, backprop = True)
         pred = np.argmax(output,axis = 0)
         accuracy[i] = np.count_nonzero(pred==batch_label) / batch_size
+
+        # Optional 1
+        if i % print_step == 0: 
+            print("Iteration: ", i, "\tAccuracy: ", accuracy[i], "\tLoss: ",loss[i])
         
         # Step 4
         grads = calc_gradient(model, batch, layer_acts, dv_output)
@@ -102,12 +106,8 @@ def train(model, input, label, params, numIters):
         else:
             momentum = update_avegrads(model, grads, momentum, rho=0.99)
         model = update_weights(model, momentum, update_params)
-
-        # Optional 1
-        if i % print_step == 0: 
-            print("Iteration: ", i, "\tAccuracy: ", accuracy[i], "\tLoss: ",loss[i])
         
     # Optional 2
     np.savez(save_file, **model)
 
-    return model, loss,accuracy
+    return model, accuracy, loss
