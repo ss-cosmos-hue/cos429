@@ -25,20 +25,21 @@ else:
     from update_weights import update_weights
 ######################################################
 
-def train(model, input, label, params, numIters):
+def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000, rho = 0.99):
     '''
     This training function is written specifically for classification,
     since it uses crossentropy loss and tests accuracy assuming the final output
     layer is a softmax layer. These can be changed for more general use.
     Args:
         model: Dictionary holding the model
-        input: [any dimensions] x [num_inputs]
+        X_train: [any dimensions] x [num_inputs]
         label: [num_inputs]
         params: Paramters for configuring training
             params["learning_rate"]
             params["weight_decay"]
             params["batch_size"]
             params["save_file"]
+            params["print_step"]
             Free to add more parameters to this dictionary for your convenience of training.
         numIters: Number of training iterations
     '''
@@ -54,20 +55,18 @@ def train(model, input, label, params, numIters):
     # your model. By default the code saves the model in 'model.npz'.
     save_file = params.get("save_file", 'model.npz')
 
+    print_step = params.get("print_step", 10)
+
     # update_params will be passed to your update_weights function.
     # This allows flexibility in case you want to implement extra features like momentum.
     update_params = {"learning_rate": lr,
                      "weight_decay": wd }
 
-    num_inputs = input.shape[-1]
-    train_loss = np.zeros((numIters,))
+    num_inputs = X_train.shape[-1]
     train_accuracy = np.zeros((numIters,))
-
-    test_loss = np.zeros((numIters,))
+    train_loss = np.zeros((numIters,))
     test_accuracy = np.zeros((numIters,))
-    
-    avegrads = None
-    
+    test_loss = np.zeros((numIters,))
     
     for i in range(numIters):
         # TODO: One training iteration
@@ -81,47 +80,35 @@ def train(model, input, label, params, numIters):
         #   (1) Monitor the progress of training
         #   (2) Save your learnt model, using ``np.savez(save_file, **model)``
         
-        #step1
-        #How do we select a subset of the input? Can we just randomly select it?
-        indices_of_batch =  np.random.choice(range(num_inputs),size = batch_size,replace=False)#randomly choose batch_size num of indices from [0,...,input-1]
-        batch = input[...,indices_of_batch]
+        # Step 1
+        indices_of_batch = np.random.choice(range(num_inputs),size = batch_size,replace=False) # Randomly choose batch_size num of indices from [0,...,input-1]
+        batch = X_train[...,indices_of_batch]
+        batch_label = y_train[indices_of_batch]
         
-        #todo normalization
-        batch_label = label[indices_of_batch]#do we need to normalize label?
-        #batch normalization
-        # batch_mean = np.mean(batch,axis = -1)[...,np.newaxis]
-        # batch_std = np.std(batch,axis= -1)[...,np.newaxis]
-        # eps = 1e-9#epsilon to avoid zero division
-        # batch = (batch -batch_mean)/(batch_std+eps)
-        #step2
+        # Step 2
         output,layer_acts = inference(model,batch)
-        
-        #output is expected to be a matrix, each column corresponding to an instance, whose probability of belonging to each class contained in each row
-        
-        #step3
-        
-        train_loss[i], dv_output = loss_crossentropy(output, batch_label, update_params, backprop = True)
-        #not sure whether backprop should be T or F
-        pred = np.argmax(output,axis = 0)
-        train_accuracy[i] = np.count_nonzero(pred==batch_label)/batch_size
-        if i%20 == 0: 
-            print("iter ",i, "accuracy ",train_accuracy[i],"loss ",train_loss[i])
-            
-        #test accuracy
-        test_accuracy[i],test_loss[i] = test(model,input,label)
-        #step4
-        grads = calc_gradient(model, batch, layer_acts, dv_output)
-        #step5
-        
 
+        # Step 3
+        train_loss[i], dv_output = loss_crossentropy(output, batch_label, update_params, backprop = True)
+        pred = np.argmax(output,axis = 0)
+        train_accuracy[i] = np.count_nonzero(pred==batch_label) / batch_size
+        test_accuracy[i], test_loss[i] = test(model, X_test, y_test)
+
+        # Optional 1
+        if i % print_step == 0: 
+            print("Iteration: ", i, "\tTrain Accuracy: ", train_accuracy[i], "\tTrain Loss: ", train_loss[i], "\tTest Accuracy: ", test_accuracy[i], "\tTest Loss: ", test_loss[i])
         
+        # Step 4
+        grads = calc_gradient(model, batch, layer_acts, dv_output)
+        
+        # Step 5
         if i == 0:
-            avegrads = grads
+            momentum = grads
         else:
-            avegrads = update_avegrads(model,grads,avegrads,rho=0.99)
+            momentum = update_avegrads(model, grads, momentum, rho=rho)
+        model = update_weights(model, momentum, update_params)
         
-        model = update_weights(model,avegrads,update_params)
-        
-    #option2  
-    # np.savez(save_file, **model)
-    return model, train_loss,train_accuracy,test_loss,test_accuracy
+    # Optional 2
+    np.savez(save_file, **model)
+
+    return model, train_accuracy, train_loss
