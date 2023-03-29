@@ -57,6 +57,8 @@ def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000, rho 
 
     print_step = params.get("print_step", 10)
 
+    test_step = params.get("test_step", 1)
+
     # update_params will be passed to your update_weights function.
     # This allows flexibility in case you want to implement extra features like momentum.
     update_params = {"learning_rate": lr,
@@ -92,7 +94,8 @@ def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000, rho 
         train_loss[i], dv_output = loss_crossentropy(output, batch_label, update_params, backprop = True)
         pred = np.argmax(output,axis = 0)
         train_accuracy[i] = np.count_nonzero(pred==batch_label) / batch_size
-        test_accuracy[i], test_loss[i] = test(model, X_test, y_test)
+        if i % test_step == 0:
+            test_accuracy[i], test_loss[i] = test(model, X_test, y_test)
 
         # Optional 1
         if i % print_step == 0: 
