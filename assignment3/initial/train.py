@@ -98,11 +98,12 @@ def train(model, X_train, y_train, X_test, y_test, params, numIters = 1000):
         train_accuracy[i] = np.count_nonzero(pred==batch_label) / batch_size
 
         # Optional 1
-        if i % print_step == 0: 
-            print("Iteration: ", i, "\tTrain Accuracy: ", train_accuracy[i], "\tTrain Loss: ", train_loss[i])
-        if i % test_step == 0:
+        if i % print_step == print_step - 1: 
+            print("Iteration: ", i + 1, "\tTrain Accuracy: ", train_accuracy[i], "\tTrain Loss: ", train_loss[i])
+        if i % test_step == test_step - 1:
             test_accuracy[i], test_loss[i] = test(model, X_test, y_test)
-            print("Test Accuracy: ", test_accuracy[i], "\tTest Loss: ", test_loss[i])
+            print("Iteration: ", i + 1, "\tTest Accuracy: ", test_accuracy[i], "\tTest Loss: ", test_loss[i])
+        
         # Step 4
         grads = calc_gradient(model, batch, layer_acts, dv_output)
         
