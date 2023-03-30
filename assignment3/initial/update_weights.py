@@ -1,6 +1,6 @@
 import numpy as np
 
-def update_weights(model, grads, hyper_params):
+def update_weights(model, grads, hyper_params,ave_grads = None):
     '''
     Update the weights of each layer in your model based on the calculated gradients
     Args:
@@ -15,14 +15,15 @@ def update_weights(model, grads, hyper_params):
     num_layers = len(grads)
     a = hyper_params["learning_rate"]
     lmd = hyper_params["weight_decay"]
-    
+    #not sure how to use it https://towardsdatascience.com/this-thing-called-weight-decay-a7cd4bcfccab
     updated_model = model
 
     # TODO: Update the weights of each layer in your model based on the calculated gradients
-    for l in range(num_layers):
-        layer = model['layers'][l]
+    
+    for i in range(num_layers):
+        layer = model['layers'][i]
         if layer['type']=='linear' or layer['type']=='conv':
-            layer['params']['W'] -= a * (grads[l]['W'] + lmd * layer['params']['W'])
-            layer['params']['b'] -= a * grads[l]['b']
+            layer['params']['W']-=a*(grads[i]['W']+2*lmd*layer['params']['W'])#though I'm not sure
+            layer['params']['b']-=a*grads[i]['b']
 
     return updated_model
