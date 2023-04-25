@@ -1,4 +1,4 @@
-from torchvision.models import resnet34, ResNet34_Weights
+from torchvision.models import resnet34#, ResNet34_Weights
 import torch.nn as nn
 import torch
 from torchsummary import summary
@@ -13,9 +13,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Model:
     def __init__(self, **kwargs):
+        self.kwargs = kwargs
         self.height = configurations.height
         self.width = configurations.width
-        self.num_classes = configurations.class_nums
+        self.num_classes = configurations.num_classes
         self.dataloaders = {}
         self.learning_rate = kwargs.get('lr')
         self.batch_size = kwargs.get('bs')
@@ -32,14 +33,17 @@ class Model:
 
     def configure_model(self):
         # Use library model
-        self.model = resnet34(weights = ResNet34_Weights.DEFAULT)
-
+        # self.model = resnet34(weights = ResNet34_Weights.DEFAULT)
+        self.model = resnet34()
+        self.model.load_state_dict(torch.load("model_weights.pth"))
+        print("constructed model")
+        num_features = self.model.fc.in_features
         if self.replace == True:
             # Fully-connected layer with correct number of classes
-            num_features = self.model.fc.in_features
+            
             self.model.fc = nn.Linear(num_features, self.num_classes)
         else:
-            self.model.add_module('fc2',nn.Linear(1000, self.num_classes))#not sure if this will work
+            self.model.add_module('fc2',nn.Linear(num_features, self.num_classes))#not sure if this will work
             #or maybe self.model = nn.Sequential
 
         # Specify device preference
@@ -70,10 +74,10 @@ class Model:
     def saveinfo(self, model, training_loss, training_accuracy, validation_loss, validation_accuracy):
         #save kwargs, model,statistics
         unique_filename = self.unique_filename
-        with open(f'modelinfo/{unique_filename}',"w") as file:
+        with open(f'modelinfo/{unique_filename}.txt',"w") as file:
             for key, value in self.kwargs.items():
                 file.write("{}: {}\n".format(key, value))
-        torch.save(model,f'model/{unique_filename}')
+        torch.save(model,f'model/{unique_filename}.pth')
 
         np.save(f'statistics/{unique_filename}_training_loss.npy',training_loss)
         np.save(f'statistics/{unique_filename}_training_accuracy.npy',training_accuracy)
@@ -95,7 +99,7 @@ class Model:
             epoch_loss = []
             epoch_accuracy = []
             for inputs, labels in self.dataloaders['train']:
-                print(f'input_size{np.shape(inputs.tensors)},label_size{input.shape(labels.tensors)}')
+                # print(f'input_size{np.shape(inputs.tensors)},label_size{input.shape(labels.tensors)}')÷
                 # Specify device preference
 
                 inputs = inputs.to(device)

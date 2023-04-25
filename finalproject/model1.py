@@ -15,7 +15,8 @@ class Model:
     def __init__(self, **kwargs):
         self.height = configurations.height
         self.width = configurations.width
-        self.num_classes = configurations.class_nums
+        self.num_classes = configurations.num_classes
+        self.kwargs = kwargs
         self.dataloaders = {}
         self.learning_rate = kwargs.get('lr')
         self.batch_size = kwargs.get('bs')
@@ -32,15 +33,17 @@ class Model:
 
     def configure_model(self):
         # Use library model
+        # self.model = resnet34(weights = ResNet34_Weights.DEFAULT)
         self.model = resnet34()
         self.model.load_state_dict(torch.load("model_weights.pth"))
-
+        
+        
+        num_features = self.model.fc.in_features
         if self.replace == True:
             # Fully-connected layer with correct number of classes
-            num_features = self.model.fc.in_features
             self.model.fc = nn.Linear(num_features, self.num_classes)
         else:
-            self.model.add_module('fc2',nn.Linear(1000, self.num_classes))#not sure if this will work
+            self.model.add_module('fc2',nn.Linear(num_features, self.num_classes))#not sure if this will work
             #or maybe self.model = nn.Sequential
 
         # Specify device preference
@@ -71,10 +74,11 @@ class Model:
     def saveinfo(self, model, training_loss, training_accuracy, validation_loss, validation_accuracy):
         #save kwargs, model,statistics
         unique_filename = self.unique_filename
-        with open(f'modelinfo/{unique_filename}',"w") as file:
+        
+        with open(f'modelinfo/{unique_filename}.txt',"w+") as file:
             for key, value in self.kwargs.items():
                 file.write("{}: {}\n".format(key, value))
-        torch.save(model,f'model/{unique_filename}')
+        torch.save(model,f'model/{unique_filename}.pth')
 
         np.save(f'statistics/{unique_filename}_training_loss.npy',training_loss)
         np.save(f'statistics/{unique_filename}_training_accuracy.npy',training_accuracy)
@@ -177,4 +181,9 @@ class Model:
             loss = self.criterion(outputs, labels)
 
             # Get statistics
-            return loss.item(), torch.mean((torch.Tensor.argmax(outputs, axis=1) == labels).type(torch.FloatTensor))
+            loss_val = loss.item()
+            acc_val = torch.mean((torch.Tensor.argmax(outputs, axis=1) == labels).type(torch.FloatTensor))
+            with open(f'modelinfo/{self.unique_filename}.txt',"a+") as file:
+                file.write(f'final test loss: {loss_val}\tfinal test accuracy:{acc_val}')
+            
+            return loss_val, acc_val
