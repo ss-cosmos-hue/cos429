@@ -32,7 +32,8 @@ class Model:
 
     def configure_model(self):
         # Use library model
-        self.model = resnet34(weights = ResNet34_Weights.DEFAULT)
+        self.model = resnet34()
+        self.model.load_state_dict(torch.load("model_weights.pth"))
 
         if self.replace == True:
             # Fully-connected layer with correct number of classes
