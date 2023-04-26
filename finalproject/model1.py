@@ -1,65 +1,68 @@
-from torchvision.models import resnet34, ResNet34_Weights
-import torch.nn as nn
 import torch
-from torchsummary import summary
 import torch.optim as optim
+import torch.nn as nn
+from torchvision.models import resnet34, ResNet34_Weights
 import numpy as np
 from PIL import Image
 from sklearn.model_selection import train_test_split
-
-from configurations import configurations
+import os
 
 device = torch.device('cuda')
 
 class Model:
     def __init__(self, **kwargs):
-        self.height = configurations.height
-        self.width = configurations.width
-        self.num_classes = configurations.num_classes
         self.kwargs = kwargs
         self.dataloaders = {}
+        self.height = kwargs.get('height')
+        self.width = kwargs.get('width')
+        self.num_classes = kwargs.get('num_classes')
         self.learning_rate = kwargs.get('lr')
         self.batch_size = kwargs.get('bs')
         self.momentum = kwargs.get('rho')
         self.decay_step = kwargs.get('gamma_step')
         self.decay_proportion = kwargs.get('gamma')
-        self.n_activelayer = kwargs.get('n_active_layers')
+        self.num_active_layers = kwargs.get('num_active_layers')
         self.replace = kwargs.get('if_replace')
         self.num_workers = kwargs.get('workers')
         self.num_epochs = kwargs.get('epochs')
         self.mask = kwargs.get('mask')
         self.unique_filename = kwargs.get('unique_filename')
+        self.filepath = 'models/%s' % self.unique_filename
+        self.create_directory()
         self.configure_model()
-
+    
+    ### Create directory for the model
+    def create_directory(self):
+        if not os.path.exists(self.filepath):
+            os.makedirs(self.filepath)
+        
+        # Save keyword arguments
+        with open(f'{self.filepath}/arguments.txt',"w+") as file:
+            for key, value in self.kwargs.items():
+                file.write("{}: {}\n".format(key, value))
+    
+    ### Edit library model to match the problem
     def configure_model(self):
         # Use library model
-        # self.model = resnet34(weights = ResNet34_Weights.DEFAULT)
         self.model = resnet34()
-        self.model.load_state_dict(torch.load("model_weights.pth"))
+        self.model.load_state_dict(torch.load("ResNet34_Weights.pth"))
         
-        
+        # Make linear layer with number of classes
         num_features = self.model.fc.in_features
-        if self.replace == True:
-            # Fully-connected layer with correct number of classes
-            self.model.fc = nn.Linear(num_features, self.num_classes)
-        else:
-            self.model.add_module('fc2',nn.Linear(num_features, self.num_classes))#not sure if this will work
-            #or maybe self.model = nn.Sequential
-
+        self.model.fc = nn.Linear(num_features, self.num_classes)
+        
         # Specify device preference
         self.model = self.model.to(device)
 
-        # Freeze parameters except for last n_activelayer layer
+        # Freeze parameters except for given number of active layers
         for param in self.model.parameters():
             param.requires_grad = False
-        for i in range(self.n_activelayer):    
+        for i in range(self.num_active_layers):    
             active_layer = list(self.model.children())[-(i+1)]
             for param in active_layer.parameters():
                 param.requires_grad = True
         
-        # Print summary of the model
-        # summary(self.model, (3, self.height, self.width))
-    
+    ### Construct the dataloaders using dataset
     def construct_data(self, datasets):
         # Generate data loaders
         self.dataloaders['train'] = torch.utils.data.DataLoader(dataset=datasets['train'], batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
@@ -71,22 +74,7 @@ class Model:
         self.optimizer_ft = optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer_ft, step_size=self.decay_step, gamma=self.decay_proportion)   
     
-    def saveinfo(self, model, training_loss, training_accuracy, validation_loss, validation_accuracy):
-        #save kwargs, model,statistics
-        unique_filename = self.unique_filename
-        
-        with open(f'modelinfo/{unique_filename}.txt',"w+") as file:
-            for key, value in self.kwargs.items():
-                file.write("{}: {}\n".format(key, value))
-        torch.save(model,f'model/{unique_filename}.pth')
-
-        np.save(f'statistics/{unique_filename}_training_loss.npy',training_loss)
-        np.save(f'statistics/{unique_filename}_training_accuracy.npy',training_accuracy)
-        np.save(f'statistics/{unique_filename}_validation_loss.npy',validation_loss)
-        np.save(f'statistics/{unique_filename}_validation_accuracy.npy',validation_accuracy)
-
-        return
-        
+    ### Train the model
     def train(self):
         training_loss = []
         training_accuracy = []
@@ -163,9 +151,19 @@ class Model:
                   % (epoch + 1, training_loss[epoch], training_accuracy[epoch], validation_loss[epoch], validation_accuracy[epoch]))
 
         print('Finished Training')
-        self.saveinfo(self.model, training_loss, training_accuracy, validation_loss, validation_accuracy)
+        
+        # Save model
+        torch.save(self.model, f'{self.filepath}/model.pth')
+        
+        # Save statistics
+        np.save(f'{self.filepath}/training_loss.npy', training_loss)
+        np.save(f'{self.filepath}/training_accuracy.npy', training_accuracy)
+        np.save(f'{self.filepath}/validation_loss.npy', validation_loss)
+        np.save(f'{self.filepath}/validation_accuracy.npy', validation_accuracy)
+                
         return self.model, training_loss, training_accuracy, validation_loss, validation_accuracy
     
+    ### Test the model
     def test(self):
         self.model.eval()
             
@@ -181,9 +179,11 @@ class Model:
             loss = self.criterion(outputs, labels)
 
             # Get statistics
-            loss_val = loss.item()
-            acc_val = torch.mean((torch.Tensor.argmax(outputs, axis=1) == labels).type(torch.FloatTensor))
-            with open(f'modelinfo/{self.unique_filename}.txt',"a+") as file:
-                file.write(f'final test loss: {loss_val}\tfinal test accuracy:{acc_val}')
+            test_loss = loss.item()
+            test_accuracy = torch.mean((torch.Tensor.argmax(outputs, axis=1) == labels).type(torch.FloatTensor))
             
-            return loss_val, acc_val
+            # Save results
+            with open(f'{self.filepath}/test_results.txt',"a+") as file:
+                file.write(f'Test Loss: %.5f \t Test Accuracy: %.5f' % (test_loss, test_accuracy))
+                
+            return test_loss, test_accuracy
