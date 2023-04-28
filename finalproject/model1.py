@@ -28,6 +28,8 @@ class Model:
         self.mask = kwargs.get('mask')
         self.unique_filename = kwargs.get('unique_filename')
         self.filepath = 'models/%s' % self.unique_filename
+        self.model_type = kwargs.get('model_type')
+        self.model_weights_ref_path = kwargs.get('model_weights_ref_path')
         self.create_directory()
         self.configure_model()
     
@@ -45,11 +47,15 @@ class Model:
     def configure_model(self):
         # Use library model
         self.model = resnet34()
-        self.model.load_state_dict(torch.load("ResNet34_Weights.pth"))
+        if self.model_type == 1:
+            self.model.load_state_dict(torch.load(self.model_weights_ref_path))
         
         # Make linear layer with number of classes
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, self.num_classes)
+        
+        if self.model_type == 2:
+            self.model.load_state_dict(torch.load(self.model_weights_ref_path))
         
         # Specify device preference
         self.model = self.model.to(device)
@@ -153,7 +159,7 @@ class Model:
         print('Finished Training')
         
         # Save model
-        torch.save(self.model, f'{self.filepath}/model.pth')
+        torch.save(self.model.state_dict(), f'{self.filepath}/model.pth')
         
         # Save statistics
         np.save(f'{self.filepath}/training_loss.npy', training_loss)

@@ -5,11 +5,19 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 
 class DataCollector:
-    def __init__(self, height, width, classes):
+    def __init__(self, height, width, classes,skin_tones=None,mask_opts = None,):
         self.height = height
         self.width = width
         self.classes = classes
         self.num_images = 0
+        self.skin_tones = skin_tones
+        if mask_opts!= None:
+            self.mask_bool = True
+            self.mask_opts = mask_opts
+            self.mask_size = mask_opts["mask_size"]
+            self.mask_pix_vals = mask_opts["skintone_label"]
+        else:
+            self.mask_bool = False
         for _, class_images in self.classes.values():
             self.num_images += class_images
     
@@ -41,6 +49,17 @@ class DataCollector:
         
         # Split data into train, validation, and test
         train_X, valtest_X, train_y, valtest_y = train_test_split(self.X, self.y, test_size=(val_size+test_size), random_state=random_state)
+        
+        if self.mask_bool:
+            train_X = train_X.reshape((len(train_X), self.height, self.width,3))   
+            for i in range(len(train_X)):
+                j = np.random.randint(self.height-self.mask_size)
+                k = np.random.randint(self.width-self.mask_size)
+                train_X[j:j+self.mask_size,k:k+self.mask_size] = self.mask_pix_vals
+            train_X = train_X.reshape((len(train_X),3, self.height, self.width))   
+        
+        
+        
         val_X, test_X, val_y, test_y = train_test_split(valtest_X, valtest_y, test_size=(test_size/(test_size+val_size)), random_state=random_state)
         
         self.datasets['train'] = torch.utils.data.TensorDataset(torch.FloatTensor(train_X), torch.LongTensor(train_y))
