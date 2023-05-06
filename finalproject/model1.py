@@ -21,6 +21,7 @@ class Model:
         self.momentum = kwargs.get('rho')
         self.decay_step = kwargs.get('gamma_step')
         self.decay_proportion = kwargs.get('gamma')
+        self.free_all = kwargs.get('free_all')
         self.num_active_layers = kwargs.get('num_active_layers')
         self.replace = kwargs.get('if_replace')
         self.num_workers = kwargs.get('workers')
@@ -61,12 +62,16 @@ class Model:
         self.model = self.model.to(device)
 
         # Freeze parameters except for given number of active layers
-        for param in self.model.parameters():
-            param.requires_grad = False
-        for i in range(self.num_active_layers):    
-            active_layer = list(self.model.children())[-(i+1)]
-            for param in active_layer.parameters():
+        if self.free_all:
+            for param in self.model.parameters():
                 param.requires_grad = True
+        else:    
+            for param in self.model.parameters():
+                param.requires_grad = False
+            for i in range(self.num_active_layers):    
+                active_layer = list(self.model.children())[-(i+1)]
+                for param in active_layer.parameters():
+                    param.requires_grad = True
         
     ### Construct the dataloaders using dataset
     def construct_data(self, datasets):
