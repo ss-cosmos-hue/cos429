@@ -52,7 +52,6 @@ class Model:
     def configure_model(self):
         # Use library model
         self.model = resnet34()
-        # self.model = resnet18()
         
         if self.model_type == 1:
             self.model.load_state_dict(torch.load(self.model_weights_ref_path))
@@ -93,11 +92,10 @@ class Model:
         self.optimizer_ft = optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer_ft, step_size=self.decay_step, gamma=self.decay_proportion)
         
-        return self.dataloaders['train'] 
+        return
     
     ### Train the model
     def train(self):
-        print("HELLO")
         training_loss = []
         training_accuracy = []
         validation_loss = []
@@ -113,7 +111,6 @@ class Model:
                 # Specify device preference
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-                # print("HEY")
                 # Zero the parameter gradients
                 self.optimizer_ft.zero_grad()
 
@@ -137,12 +134,6 @@ class Model:
                 epoch_loss.append(minibatch_loss)
                 epoch_accuracy.append(minibatch_accuracy)  
                
-                # inputs = inputs.to(device_cpu)
-                # labels = labels.to(device_cpu)
-                # del inputs
-                # del labels
-                # torch.cuda.empty_cache()
-                # gc.collect()
             self.lr_scheduler.step()
                 
             
